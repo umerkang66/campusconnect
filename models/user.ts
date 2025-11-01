@@ -18,6 +18,8 @@ export interface IUser {
   updatedAt: Date;
   resetToken?: string;
   resetTokenExpiry?: Date | number;
+  verifyToken?: string;
+  verifyTokenExpiry?: Date | number;
 }
 
 const UserSchema = new Schema<IUser>(
@@ -39,6 +41,8 @@ const UserSchema = new Schema<IUser>(
     },
     resetToken: String,
     resetTokenExpiry: Date,
+    verifyToken: String,
+    verifyTokenExpiry: Date,
     password: {
       type: String,
       select: false, // Don't return password in queries by default

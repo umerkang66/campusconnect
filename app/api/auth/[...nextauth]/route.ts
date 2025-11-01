@@ -4,6 +4,7 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import connectDB from '@/lib/mongodb';
 import User from '@/models/user';
+import mongoose from 'mongoose';
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -74,6 +75,17 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+
+        const isValid = mongoose.Types.ObjectId.isValid(user.id);
+
+        if (isValid) {
+          await connectDB();
+          const foundUser = await User.findById(user.id);
+
+          token.emailVerified = foundUser?.emailVerified;
+        } else {
+          token.emailVerified = new Date();
+        }
       }
 
       if (trigger === 'update' && session) {
@@ -86,6 +98,7 @@ export const authOptions: AuthOptions = {
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.emailVerified = token.emailVerified as string;
       }
       return session;
     },
