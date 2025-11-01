@@ -33,7 +33,6 @@ export const authOptions: AuthOptions = {
         }
 
         const isValid = await bcrypt.compare(
-          // @ts-ignore
           credentials.password,
           user.password
         );
@@ -47,15 +46,16 @@ export const authOptions: AuthOptions = {
           email: user.email,
           name: user.name,
           image: user.image,
+          emailVerified: user.emailVerified?.toString(), // ✅ include here too
         };
       },
     }),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      if (account?.provider === 'github') {
-        await connectDB();
+      await connectDB();
 
+      if (account?.provider === 'github') {
         const existingUser = await User.findOne({ email: user.email });
 
         if (!existingUser) {
@@ -67,23 +67,31 @@ export const authOptions: AuthOptions = {
           });
         }
       }
+
       return true;
     },
+
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
+        // ✅ include emailVerified in token
+        token.emailVerified = user.emailVerified ?? null;
       }
 
-      // Update token if session is updated
       if (trigger === 'update' && session) {
         token = { ...token, ...session };
       }
 
       return token;
     },
+
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        // ✅ include emailVerified in session
+        session.user.emailVerified = (
+          token.emailVerified as string
+        )?.toString();
       }
       return session;
     },

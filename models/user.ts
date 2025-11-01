@@ -39,7 +39,7 @@ const UserSchema = new Schema<IUser>(
       type: String,
       select: false, // Don't return password in queries by default
     },
-    emailVerified: Date,
+    emailVerified: { type: Date, default: null },
     image: String,
     bio: {
       type: String,
