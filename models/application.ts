@@ -37,7 +37,7 @@ const ApplicationSchema = new Schema<IApplication>(
     },
     jobPostId: {
       type: Schema.Types.ObjectId,
-      ref: 'User',
+      ref: 'Post',
       required: true,
     },
   },

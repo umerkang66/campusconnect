@@ -17,9 +17,10 @@ export async function GET(
     }
 
     await connectDB();
+    const { id: jobId } = await params;
 
     // Verify job ownership
-    const job = await JobPost.findById(params.id);
+    const job = await JobPost.findById(jobId);
 
     if (!job) {
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
@@ -34,12 +35,9 @@ export async function GET(
 
     // Get applications
     const applications = await Application.find({
-      jobPostId: params.id,
+      jobPostId: jobId,
     })
-      .populate(
-        'applicantId',
-        'name email image skills interests bio university major'
-      )
+      .populate('applicantId', 'name email university major')
       .sort({ createdAt: -1 })
       .lean();
 

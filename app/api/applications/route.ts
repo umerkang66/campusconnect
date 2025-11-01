@@ -19,13 +19,6 @@ export async function GET(req: NextRequest) {
     const applications = await Application.find({
       applicantId: session.user.id,
     })
-      .populate({
-        path: 'jobPostId',
-        populate: {
-          path: 'creatorId',
-          select: 'name email image',
-        },
-      })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -51,6 +44,8 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const { jobPostId, coverLetter, resume } = await req.json();
+
+    console.log(jobPostId, coverLetter, resume);
 
     if (!jobPostId) {
       return NextResponse.json(

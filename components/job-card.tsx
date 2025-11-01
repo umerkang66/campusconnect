@@ -19,9 +19,15 @@ export default function JobCard({ job }: { job: any }) {
       </div>
 
       <div className="mt-4 flex justify-between items-center">
-        <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
-          {job.type}
-        </span>
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium text-blue-600 dark:text-blue-400">
+            {job.type}
+          </span>
+          <span className="text-sm text-gray-500">
+            {job.applicationsCount || 0}{' '}
+            {job.applicationsCount === 1 ? 'applicant' : 'applicants'}
+          </span>
+        </div>
         <Link
           href={`/jobs/${job._id}`}
           className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg shadow transition-colors"

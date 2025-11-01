@@ -26,17 +26,17 @@ export default function Dashboard() {
             href: '/create-job',
             description: 'Post a new job for talent to apply.',
           },
-          {
-            title: 'Applicants',
-            href: '/dashboard/applicants',
-            description: 'View who applied to your jobs.',
-          },
         ]
       : [
           {
             title: 'Browse Jobs',
             href: '/jobs',
             description: 'Find opportunities that match your skills.',
+          },
+          {
+            title: 'Applied Jobs',
+            href: '/applied-jobs',
+            description: 'Your Applied Jobs.',
           },
         ];
 

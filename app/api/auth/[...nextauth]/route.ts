@@ -61,18 +61,19 @@ export const authOptions: AuthOptions = {
       await connectDB();
 
       if (account?.provider === 'github') {
-        const existingUser = await User.findOne({ email: user.email });
-
+        let existingUser = await User.findOne({ email: user.email });
         if (!existingUser) {
-          await User.create({
+          // MongoDB will auto-generate _id
+          existingUser = await User.create({
             email: user.email,
             name: user.name || profile?.name,
             image: user.image,
             emailVerified: new Date(),
           });
         }
+        // Attach MongoDB _id to user object for JWT
+        user.id = existingUser._id.toString();
       }
-
       return true;
     },
 

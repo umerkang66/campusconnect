@@ -3,21 +3,18 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectDB from '@/lib/mongodb';
 import JobPost from '@/models/post';
-import mongoose from 'mongoose';
 
 // GET - Fetch single job
-export async function GET(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(req: NextRequest, context: { params: any }) {
   try {
     await connectDB();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
-      return NextResponse.json({ error: 'Invalid job ID' }, { status: 400 });
-    }
+    // In App Router, params is a Promise-like object, unwrap it
+    const { id } = await context.params;
 
-    const job = await JobPost.findById(params.id).populate(
+    console.log('🌟 Job ID:', id);
+
+    const job = await JobPost.findById(id).populate(
       'creatorId',
       'name email image bio university major'
     );
@@ -38,11 +35,9 @@ export async function GET(
 }
 
 // PATCH - Update job
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(req: NextRequest, context: { params: any }) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -51,13 +46,10 @@ export async function PATCH(
 
     await connectDB();
 
-    const job = await JobPost.findById(params.id);
-
-    if (!job) {
+    const job = await JobPost.findById(id);
+    if (!job)
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
-    }
 
-    // Check ownership
     if (job.creatorId.toString() !== session.user.id) {
       return NextResponse.json(
         { error: "Forbidden - You don't own this job" },
@@ -66,8 +58,6 @@ export async function PATCH(
     }
 
     const updates = await req.json();
-
-    // Update fields
     Object.keys(updates).forEach(key => {
       if (key !== '_id' && key !== 'creatorId' && key !== 'views') {
         (job as any)[key] = updates[key];
@@ -76,11 +66,10 @@ export async function PATCH(
 
     await job.save();
 
-    const updatedJob = await JobPost.findById(params.id).populate(
+    const updatedJob = await JobPost.findById(id).populate(
       'creatorId',
       'name email image'
     );
-
     return NextResponse.json({ job: updatedJob });
   } catch (error) {
     console.error('Update job error:', error);
@@ -92,11 +81,9 @@ export async function PATCH(
 }
 
 // DELETE - Delete job
-export async function DELETE(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(req: NextRequest, context: { params: any }) {
   try {
+    const { id } = await context.params;
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -105,21 +92,17 @@ export async function DELETE(
 
     await connectDB();
 
-    const job = await JobPost.findById(params.id);
-
-    if (!job) {
+    const job = await JobPost.findById(id);
+    if (!job)
       return NextResponse.json({ error: 'Job not found' }, { status: 404 });
-    }
 
     if (job.creatorId.toString() !== session.user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await JobPost.findByIdAndDelete(params.id);
+    await JobPost.findByIdAndDelete(id);
 
-    return NextResponse.json({
-      message: 'Job deleted successfully',
-    });
+    return NextResponse.json({ message: 'Job deleted successfully' });
   } catch (error) {
     console.error('Delete job error:', error);
     return NextResponse.json(
