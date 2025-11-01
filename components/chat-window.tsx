@@ -1,6 +1,6 @@
 'use client';
 
-import { initSocket, getSocket } from '@/lib/socket';
+import { getSocket } from '@/lib/socket';
 import api from '@/lib/api';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -33,9 +33,10 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
 
     fetchMessages();
 
-    const s = initSocket(session.user.id);
+    const s = getSocket();
+    if (!s) return;
 
-    s.on('message', (msg: any) => {
+    const handleMessage = (msg: any) => {
       // Only push messages between these two users
       if (
         (msg.senderId._id === otherUserId &&
@@ -46,10 +47,12 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
         setMessages(m => [...m, msg]);
         scrollBottom();
       }
-    });
+    };
+
+    s.on('message', handleMessage);
 
     return () => {
-      s.off('message');
+      s.off('message', handleMessage);
     };
   }, [otherUserId, session?.user?.id]);
 
