@@ -19,7 +19,9 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
   };
 
   useEffect(() => {
-    async function fetchMessages() {
+    if (!session?.user?.id) return;
+
+    const fetchMessages = async () => {
       try {
         const res = await api.get(`/messages?userId=${otherUserId}`);
         setMessages(res.data.messages || []);
@@ -27,16 +29,19 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
       } catch (e) {
         console.error(e);
       }
-    }
+    };
 
     fetchMessages();
-    const s = initSocket();
+
+    const s = initSocket(session.user.id);
 
     s.on('message', (msg: any) => {
+      // Only push messages between these two users
       if (
-        (msg.senderId === otherUserId &&
-          msg.receiverId === session?.user?.id) ||
-        (msg.senderId === session?.user?.id && msg.receiverId === otherUserId)
+        (msg.senderId._id === otherUserId &&
+          msg.receiverId._id === session.user.id) ||
+        (msg.senderId._id === session.user.id &&
+          msg.receiverId._id === otherUserId)
       ) {
         setMessages(m => [...m, msg]);
         scrollBottom();
@@ -44,35 +49,36 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
     });
 
     return () => {
-      /* socket is global, no cleanup */
+      s.off('message');
     };
   }, [otherUserId, session?.user?.id]);
 
   const send = async () => {
-    if (!text.trim()) return;
+    if (!text.trim() || !session?.user?.id) return;
+
+    const messagePayload = {
+      senderId: session.user.id,
+      receiverId: otherUserId,
+      content: text,
+    };
+
     try {
-      const res = await api.post('/messages', {
-        receiverId: otherUserId,
-        content: text,
-      });
-      setMessages(m => [...m, res.data.message]);
-      setText('');
+      const res = await api.post('/messages', messagePayload);
       const s = getSocket();
       s?.emit('message', res.data.message);
+      setText('');
       scrollBottom();
-    } catch (e) {
-      console.error(e);
+    } catch (err) {
+      console.error(err);
     }
   };
 
   return (
     <div className="flex flex-col h-full max-h-[500px] border border-gray-200 dark:border-neutral-800 rounded-2xl shadow-lg bg-white dark:bg-neutral-900 overflow-hidden">
-      {/* Chat Header */}
       <div className="px-4 py-2 bg-gray-100 dark:bg-neutral-800 border-b border-gray-200 dark:border-neutral-700 font-semibold text-gray-800 dark:text-gray-100">
         Chat
       </div>
 
-      {/* Chat Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         <AnimatePresence initial={false}>
           {messages.map(m => {
@@ -109,7 +115,6 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
         <div ref={ref} />
       </div>
 
-      {/* Input */}
       <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-200 dark:border-neutral-700 bg-gray-50 dark:bg-neutral-800">
         <input
           type="text"
