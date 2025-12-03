@@ -1,6 +1,6 @@
 'use client';
 
-import { getSocket } from '@/lib/socket';
+import { getPusher } from '@/lib/socket';
 import api from '@/lib/api';
 import { useSession } from 'next-auth/react';
 import { useEffect, useRef, useState } from 'react';
@@ -33,8 +33,14 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
 
     fetchMessages();
 
-    const s = getSocket();
-    if (!s) return;
+    const pusher = getPusher();
+    if (!pusher) return;
+
+    // Subscribe to the user's private channel
+    const channelName = `private-user-${session.user.id}`;
+    const channel = pusher.channel(channelName);
+
+    if (!channel) return;
 
     const handleMessage = (msg: any) => {
       // Only push messages between these two users
@@ -49,10 +55,10 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
       }
     };
 
-    s.on('message', handleMessage);
+    channel.bind('new-message', handleMessage);
 
     return () => {
-      s.off('message', handleMessage);
+      channel.unbind('new-message', handleMessage);
     };
   }, [otherUserId, session?.user?.id]);
 
@@ -66,9 +72,8 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
     };
 
     try {
-      const res = await api.post('/messages', messagePayload);
-      const s = getSocket();
-      s?.emit('message', res.data.message);
+      // API route will handle sending the message via Pusher
+      await api.post('/messages', messagePayload);
       setText('');
       scrollBottom();
     } catch (err) {
@@ -92,16 +97,14 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className={`flex flex-col max-w-xs ${
-                  isMe ? 'ml-auto items-end' : 'mr-auto items-start'
-                }`}
+                className={`flex flex-col max-w-xs ${isMe ? 'ml-auto items-end' : 'mr-auto items-start'
+                  }`}
               >
                 <div
-                  className={`px-4 py-2 rounded-2xl break-words shadow-sm text-sm ${
-                    isMe
-                      ? 'bg-green-500 text-white rounded-br-none'
-                      : 'bg-gray-200 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
-                  }`}
+                  className={`px-4 py-2 rounded-2xl break-words shadow-sm text-sm ${isMe
+                    ? 'bg-green-500 text-white rounded-br-none'
+                    : 'bg-gray-200 dark:bg-neutral-700 text-gray-900 dark:text-gray-100 rounded-bl-none'
+                    }`}
                 >
                   {m.content}
                 </div>

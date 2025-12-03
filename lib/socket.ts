@@ -1,73 +1,94 @@
-import { io, Socket } from 'socket.io-client';
+import Pusher from 'pusher-js';
 import { useStore } from '@/store/use-store';
 
-let socket: Socket | null = null;
+let pusher: Pusher | null = null;
+let currentChannel: any = null;
 
-export function initSocket(userId?: string) {
-  if (socket) return socket;
-  const url = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001';
-  socket = io(url, {
-    auth: { userId }, // send userId to server for joining room
+export function initPusher(userId?: string) {
+  if (pusher) return pusher;
+
+  // Initialize Pusher client
+  pusher = new Pusher(process.env.NEXT_PUBLIC_PUSHER_KEY!, {
+    cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+    authEndpoint: '/api/pusher/auth',
   });
 
-  socket.on('connect', () => {
-    if (userId) {
-      socket?.emit('join', userId); // join own room
-    }
-  });
+  if (userId) {
+    // Subscribe to user's private channel
+    const channelName = `private-user-${userId}`;
+    currentChannel = pusher.subscribe(channelName);
 
-  // Global incoming message handler: update unread counter and latest sender
-  socket.on('message', (msg: any) => {
-    try {
-      console.log('[Socket] Message received:', msg);
+    currentChannel.bind('pusher:subscription_succeeded', () => {
+      console.log('[Pusher] Successfully subscribed to', channelName);
+    });
 
-      // Extract IDs, handling both string and object formats
-      const receiverId = msg.receiverId?._id || msg.receiverId;
-      const senderId = msg.senderId?._id || msg.senderId;
+    currentChannel.bind('pusher:subscription_error', (error: any) => {
+      console.error('[Pusher] Subscription error:', error);
+    });
 
-      console.log('[Socket] Parsed IDs:', {
-        receiverId,
-        senderId,
-        myUserId: userId,
-      });
+    // Listen for incoming messages
+    currentChannel.bind('new-message', (msg: any) => {
+      try {
+        console.log('[Pusher] Message received:', msg);
 
-      // only increment unread if this message is for current user and not from them
-      if (receiverId === userId && senderId !== userId) {
-        console.log('[Socket] Message is for me, checking chat state...');
+        // Extract IDs, handling both string and object formats
+        const receiverId = msg.receiverId?._id || msg.receiverId;
+        const senderId = msg.senderId?._id || msg.senderId;
 
-        const state = useStore.getState();
-        console.log('[Socket] Current chat state:', {
-          chatOpen: state.chatOpen,
-          activeChatUserId: state.activeChatUserId,
-          unreadCount: state.unreadCount,
+        console.log('[Pusher] Parsed IDs:', {
+          receiverId,
+          senderId,
+          myUserId: userId,
         });
 
-        // Always track latest sender
-        useStore.setState(state => ({
-          latestSenderId: senderId,
-          unreadCount:
-            state.chatOpen && state.activeChatUserId === senderId
-              ? state.unreadCount // don't increment if chat is open with sender
-              : state.unreadCount + 1,
-        }));
+        // Only increment unread if this message is for current user and not from them
+        if (receiverId === userId && senderId !== userId) {
+          console.log('[Pusher] Message is for me, checking chat state...');
 
-        console.log('[Socket] Updated store:', useStore.getState());
+          const state = useStore.getState();
+          console.log('[Pusher] Current chat state:', {
+            chatOpen: state.chatOpen,
+            activeChatUserId: state.activeChatUserId,
+            unreadCount: state.unreadCount,
+          });
+
+          // Always track latest sender
+          useStore.setState(state => ({
+            latestSenderId: senderId,
+            unreadCount:
+              state.chatOpen && state.activeChatUserId === senderId
+                ? state.unreadCount // don't increment if chat is open with sender
+                : state.unreadCount + 1,
+          }));
+
+          console.log('[Pusher] Updated store:', useStore.getState());
+        }
+      } catch (err) {
+        console.error('[Pusher] Message handling error:', err);
       }
-    } catch (err) {
-      console.error('[Socket] Message handling error:', err);
-    }
-  });
+    });
+  }
 
-  return socket;
+  return pusher;
 }
 
-export function getSocket() {
-  return socket;
+export function getPusher() {
+  return pusher;
 }
 
-export function disconnectSocket() {
-  if (socket) {
-    socket.disconnect();
-    socket = null;
+export function getCurrentChannel() {
+  return currentChannel;
+}
+
+export function disconnectPusher() {
+  if (currentChannel) {
+    currentChannel.unbind_all();
+    currentChannel.unsubscribe();
+    currentChannel = null;
+  }
+  if (pusher) {
+    pusher.disconnect();
+    pusher = null;
   }
 }
+

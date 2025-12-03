@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectDB from '@/lib/mongodb';
 import Message from '@/models/message';
+import Pusher from 'pusher';
 
 export async function GET(req: NextRequest) {
   try {
@@ -73,6 +74,29 @@ export async function POST(req: NextRequest) {
     const populatedMessage = await Message.findById(message._id)
       .populate('senderId', 'name image')
       .populate('receiverId', 'name image');
+
+    // Initialize Pusher and trigger event to receiver's channel
+    const pusher = new Pusher({
+      appId: process.env.PUSHER_APP_ID!,
+      key: process.env.NEXT_PUBLIC_PUSHER_KEY!,
+      secret: process.env.PUSHER_SECRET!,
+      cluster: process.env.NEXT_PUBLIC_PUSHER_CLUSTER!,
+      useTLS: true,
+    });
+
+    // Trigger event to receiver's private channel
+    await pusher.trigger(
+      `private-user-${receiverId}`,
+      'new-message',
+      populatedMessage
+    );
+
+    // Also trigger to sender's channel for optimistic UI updates
+    await pusher.trigger(
+      `private-user-${session.user.id}`,
+      'new-message',
+      populatedMessage
+    );
 
     return NextResponse.json({ message: populatedMessage }, { status: 201 });
   } catch (error) {
