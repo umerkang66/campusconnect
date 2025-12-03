@@ -34,15 +34,26 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
     fetchMessages();
 
     const pusher = getPusher();
-    if (!pusher) return;
+    if (!pusher) {
+      console.warn('[ChatWindow] Pusher not initialized');
+      return;
+    }
 
-    // Subscribe to the user's private channel
+    // Get the already-subscribed channel
     const channelName = `private-user-${session.user.id}`;
-    const channel = pusher.channel(channelName);
+    let channel = pusher.channel(channelName);
 
-    if (!channel) return;
+    // If channel doesn't exist, subscribe to it
+    if (!channel) {
+      console.log('[ChatWindow] Subscribing to channel:', channelName);
+      channel = pusher.subscribe(channelName);
+    }
+
+    console.log('[ChatWindow] Setting up message handler for channel:', channelName);
 
     const handleMessage = (msg: any) => {
+      console.log('[ChatWindow] Message received:', msg);
+
       // Only push messages between these two users
       if (
         (msg.senderId._id === otherUserId &&
@@ -50,15 +61,20 @@ export default function ChatWindow({ otherUserId }: { otherUserId: string }) {
         (msg.senderId._id === session.user.id &&
           msg.receiverId._id === otherUserId)
       ) {
+        console.log('[ChatWindow] Adding message to chat');
         setMessages(m => [...m, msg]);
         scrollBottom();
+      } else {
+        console.log('[ChatWindow] Message not for this conversation');
       }
     };
 
     channel.bind('new-message', handleMessage);
 
     return () => {
-      channel.unbind('new-message', handleMessage);
+      if (channel) {
+        channel.unbind('new-message', handleMessage);
+      }
     };
   }, [otherUserId, session?.user?.id]);
 

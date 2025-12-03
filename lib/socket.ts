@@ -13,6 +13,19 @@ export function initPusher(userId?: string) {
     authEndpoint: '/api/pusher/auth',
   });
 
+  // Add connection state listeners
+  pusher.connection.bind('connected', () => {
+    console.log('[Pusher] ✓ Connected to Pusher');
+  });
+
+  pusher.connection.bind('disconnected', () => {
+    console.log('[Pusher] ⚠ Disconnected from Pusher');
+  });
+
+  pusher.connection.bind('failed', () => {
+    console.error('[Pusher] ✗ Connection failed');
+  });
+
   if (userId) {
     // Subscribe to user's private channel
     const channelName = `private-user-${userId}`;

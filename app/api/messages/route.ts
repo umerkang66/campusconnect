@@ -84,19 +84,29 @@ export async function POST(req: NextRequest) {
       useTLS: true,
     });
 
-    // Trigger event to receiver's private channel
-    await pusher.trigger(
-      `private-user-${receiverId}`,
-      'new-message',
-      populatedMessage
-    );
+    console.log('[Messages API] Triggering Pusher events for message:', message._id);
+    console.log('[Messages API] Receiver channel:', `private-user-${receiverId}`);
+    console.log('[Messages API] Sender channel:', `private-user-${session.user.id}`);
 
-    // Also trigger to sender's channel for optimistic UI updates
-    await pusher.trigger(
-      `private-user-${session.user.id}`,
-      'new-message',
-      populatedMessage
-    );
+    try {
+      // Trigger event to receiver's private channel
+      await pusher.trigger(
+        `private-user-${receiverId}`,
+        'new-message',
+        populatedMessage
+      );
+      console.log('[Messages API] ✓ Triggered to receiver');
+
+      // Also trigger to sender's channel for optimistic UI updates
+      await pusher.trigger(
+        `private-user-${session.user.id}`,
+        'new-message',
+        populatedMessage
+      );
+      console.log('[Messages API] ✓ Triggered to sender');
+    } catch (pusherError) {
+      console.error('[Messages API] Pusher trigger error:', pusherError);
+    }
 
     return NextResponse.json({ message: populatedMessage }, { status: 201 });
   } catch (error) {
