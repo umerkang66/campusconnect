@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import Pusher from 'pusher';
 
 const pusher = new Pusher({
@@ -12,9 +13,10 @@ const pusher = new Pusher({
 
 export async function POST(req: NextRequest) {
     try {
-        const session = await getServerSession();
+        const session = await getServerSession(authOptions);
 
         if (!session?.user) {
+            console.error('[Pusher Auth] No session found');
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
@@ -43,6 +45,8 @@ export async function POST(req: NextRequest) {
 
         // Authenticate the user for this private channel
         const authResponse = pusher.authorizeChannel(socketId, channelName);
+
+        console.log('[Pusher Auth] ✓ Authorized:', channelName);
 
         return NextResponse.json(authResponse);
     } catch (error) {
