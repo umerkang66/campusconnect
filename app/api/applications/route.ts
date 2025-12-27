@@ -4,6 +4,7 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectDB from '@/lib/mongodb';
 import Application from '@/models/application';
 import JobPost from '@/models/post';
+import User from '@/models/user';
 
 // GET - User's applications
 export async function GET(req: NextRequest) {

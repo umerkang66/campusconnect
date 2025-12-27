@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 
 interface State {
   role: 'FINDER' | 'SEEKER';
@@ -18,61 +19,70 @@ interface State {
   closeChat: () => void;
 }
 
-export const useStore = create<State>(set => ({
-  role: 'SEEKER',
-  toggleRole: () =>
-    set(s => ({ role: s.role === 'SEEKER' ? 'FINDER' : 'SEEKER' })),
+export const useStore = create<State>()(
+  persist(
+    set => ({
+      role: 'SEEKER',
+      toggleRole: () =>
+        set(s => ({ role: s.role === 'SEEKER' ? 'FINDER' : 'SEEKER' })),
 
-  // chat defaults
-  unreadCount: 0,
-  unreadMessages: {},
-  latestSenderId: null,
-  chatOpen: false,
-  activeChatUserId: null,
+      // chat defaults
+      unreadCount: 0,
+      unreadMessages: {},
+      latestSenderId: null,
+      chatOpen: false,
+      activeChatUserId: null,
 
-  incrementUnread: (fromId: string) =>
-    set(state => {
-      const currentUnread = state.unreadMessages[fromId] || 0;
-      const unreadMessages = {
-        ...state.unreadMessages,
-        [fromId]: currentUnread + 1,
-      };
+      incrementUnread: (fromId: string) =>
+        set(state => {
+          const currentUnread = state.unreadMessages[fromId] || 0;
+          const unreadMessages = {
+            ...state.unreadMessages,
+            [fromId]: currentUnread + 1,
+          };
 
-      return {
-        unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
-        unreadMessages,
-        latestSenderId: fromId,
-      };
+          return {
+            unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
+            unreadMessages,
+            latestSenderId: fromId,
+          };
+        }),
+
+      resetUnread: (senderId?: string) =>
+        set(state => {
+          if (senderId) {
+            const unreadMessages = { ...state.unreadMessages };
+            delete unreadMessages[senderId];
+            return {
+              unreadMessages,
+              unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
+            };
+          }
+          return { unreadCount: 0, unreadMessages: {} };
+        }),
+
+      openChatWith: userId =>
+        set(state => {
+          if (userId) {
+            // Reset unread for this sender when opening their chat
+            const unreadMessages = { ...state.unreadMessages };
+            delete unreadMessages[userId];
+            return {
+              chatOpen: true,
+              activeChatUserId: userId,
+              unreadMessages,
+              unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
+            };
+          }
+          return { chatOpen: true, activeChatUserId: userId };
+        }),
+
+      closeChat: () => set({ chatOpen: false, activeChatUserId: null }),
     }),
+    {
+      name: 'campus-connect-store',
+      partialize: state => ({ role: state.role }), // Only persist the role
+    }
+  )
+);
 
-  resetUnread: (senderId?: string) =>
-    set(state => {
-      if (senderId) {
-        const unreadMessages = { ...state.unreadMessages };
-        delete unreadMessages[senderId];
-        return {
-          unreadMessages,
-          unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
-        };
-      }
-      return { unreadCount: 0, unreadMessages: {} };
-    }),
-
-  openChatWith: userId =>
-    set(state => {
-      if (userId) {
-        // Reset unread for this sender when opening their chat
-        const unreadMessages = { ...state.unreadMessages };
-        delete unreadMessages[userId];
-        return {
-          chatOpen: true,
-          activeChatUserId: userId,
-          unreadMessages,
-          unreadCount: Object.values(unreadMessages).reduce((a, b) => a + b, 0),
-        };
-      }
-      return { chatOpen: true, activeChatUserId: userId };
-    }),
-
-  closeChat: () => set({ chatOpen: false, activeChatUserId: null }),
-}));

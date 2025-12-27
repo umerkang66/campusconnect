@@ -4,10 +4,11 @@ import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectDB from '@/lib/mongodb';
 import Application from '@/models/application';
 import JobPost from '@/models/post';
+import User from '@/models/user';
 
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -18,6 +19,7 @@ export async function PATCH(
 
     await connectDB();
 
+    const { id: applicationId } = await params;
     const { status } = await req.json();
 
     if (!status) {
@@ -27,7 +29,7 @@ export async function PATCH(
       );
     }
 
-    const application = await Application.findById(params.id);
+    const application = await Application.findById(applicationId);
 
     if (!application) {
       return NextResponse.json(
@@ -57,7 +59,7 @@ export async function PATCH(
     application.status = status;
     await application.save();
 
-    const updatedApplication = await Application.findById(params.id)
+    const updatedApplication = await Application.findById(applicationId)
       .populate('applicantId', 'name email image')
       .populate('jobPostId', 'title');
 

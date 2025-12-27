@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
-import { LogIn, Github, Loader2 } from 'lucide-react';
+import { LogIn, Github, Loader2, Sparkles, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function SignInPage() {
   const [email, setEmail] = useState('');
@@ -27,7 +28,6 @@ export default function SignInPage() {
         password,
       });
 
-      // Handle error from credentials provider
       if (!res || res.error) {
         toast.error(res?.error || 'Invalid email or password.', {
           id: toastId,
@@ -37,7 +37,6 @@ export default function SignInPage() {
         router.push('/dashboard');
       }
     } catch (err: any) {
-      // Catch any unexpected runtime or network error
       const message =
         err?.response?.data?.message ||
         err?.message ||
@@ -58,106 +57,142 @@ export default function SignInPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-200 dark:from-neutral-900 dark:to-neutral-950 flex items-center justify-center p-6 transition-colors">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950 flex items-center justify-center p-6 relative overflow-hidden">
+      {/* Animated background elements */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-float" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-500/20 rounded-full blur-3xl animate-float-delayed" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-indigo-500/10 rounded-full blur-3xl" />
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className="w-full max-w-md bg-white dark:bg-neutral-900 rounded-2xl shadow-xl p-8 border border-gray-200 dark:border-neutral-800 transition-colors"
+        className="relative z-10 w-full max-w-md"
       >
-        {/* Header */}
-        <div className="text-center mb-6">
-          <div className="flex justify-center mb-3">
-            <LogIn className="w-10 h-10 text-gray-800 dark:text-gray-100" />
+        {/* Gradient border wrapper */}
+        <div className="animated-gradient p-[1px] rounded-2xl">
+          <div className="glass-card p-8 rounded-2xl">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+                className="w-16 h-16 mx-auto mb-4 rounded-2xl gradient-bg flex items-center justify-center animate-pulse-glow"
+              >
+                <LogIn className="w-8 h-8 text-white" />
+              </motion.div>
+              <h2 className="text-3xl font-bold mb-2">
+                <span className="gradient-text">Welcome Back</span>
+              </h2>
+              <p className="text-gray-500 dark:text-gray-400">
+                Sign in to continue your journey
+              </p>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-4">
+                <input
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  type="email"
+                  placeholder="Email address"
+                  required
+                  disabled={loading}
+                  className="input-modern disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+
+                <input
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  type="password"
+                  placeholder="Password"
+                  required
+                  disabled={loading}
+                  className="input-modern disabled:opacity-60 disabled:cursor-not-allowed"
+                />
+              </div>
+
+              <div className="flex justify-end">
+                <Link
+                  href="/auth/reset-request"
+                  className="text-sm text-indigo-500 hover:text-indigo-400 transition-colors"
+                >
+                  Forgot your password?
+                </Link>
+              </div>
+
+              <motion.button
+                type="submit"
+                disabled={loading}
+                whileHover={{ scale: loading ? 1 : 1.02 }}
+                whileTap={{ scale: loading ? 1 : 0.98 }}
+                className={`w-full btn-primary flex items-center justify-center gap-2 py-3 ${loading ? 'opacity-70 cursor-not-allowed' : ''
+                  }`}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                    Signing In...
+                  </>
+                ) : (
+                  <>
+                    Sign In
+                    <ArrowRight className="w-5 h-5" />
+                  </>
+                )}
+              </motion.button>
+            </form>
+
+            {/* Divider */}
+            <div className="flex items-center gap-4 my-6">
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-neutral-700 to-transparent" />
+              <span className="text-sm text-gray-500 dark:text-gray-400">or continue with</span>
+              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-gray-300 dark:via-neutral-700 to-transparent" />
+            </div>
+
+            {/* GitHub Sign-in */}
+            <motion.button
+              onClick={handleGithubSignIn}
+              disabled={loading}
+              whileHover={{ scale: loading ? 1 : 1.02 }}
+              whileTap={{ scale: loading ? 1 : 0.98 }}
+              className="w-full btn-secondary flex items-center justify-center gap-3 py-3 disabled:opacity-60"
+            >
+              <Github className="w-5 h-5" />
+              <span className="font-medium">GitHub</span>
+            </motion.button>
+
+            {/* Footer */}
+            <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-6">
+              Don't have an account?{' '}
+              <Link
+                href="/auth/signup"
+                className="gradient-text font-semibold hover:opacity-80 transition-opacity"
+              >
+                Sign up
+              </Link>
+            </p>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100 tracking-tight">
-            Welcome Back
-          </h2>
-          <p className="text-gray-500 dark:text-gray-400 mt-1 text-sm">
-            Sign in to continue to your account
-          </p>
         </div>
 
-        {/* Form */}
-        <form onSubmit={onSubmit} className="space-y-4">
-          <input
-            value={email}
-            onChange={e => setEmail(e.target.value)}
-            type="email"
-            placeholder="Email"
-            required
-            disabled={loading}
-            className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 outline-none focus:border-gray-900 dark:focus:border-gray-300 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-          />
-
-          <input
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            type="password"
-            placeholder="Password"
-            required
-            disabled={loading}
-            className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-neutral-800 border border-gray-300 dark:border-neutral-700 text-gray-900 dark:text-gray-100 placeholder-gray-500 outline-none focus:border-gray-900 dark:focus:border-gray-300 focus:ring-1 focus:ring-gray-400 dark:focus:ring-gray-500 transition-all duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-          />
-
-          <p
-            onClick={() => router.push('/auth/reset-request')}
-            className="text-sm text-gray-700 dark:text-gray-300 hover:underline cursor-pointer text-right"
-          >
-            Forgot your password?
-          </p>
-
-          <button
-            type="submit"
-            disabled={loading}
-            className={`cursor-pointer w-full py-3 flex items-center justify-center gap-2 font-semibold rounded-lg shadow-md transition-all duration-300 ${
-              loading
-                ? 'bg-gray-700 dark:bg-gray-300 text-gray-300 dark:text-gray-700 cursor-not-allowed'
-                : 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 hover:shadow-lg hover:bg-gray-800 dark:hover:bg-gray-200 transform hover:-translate-y-0.5'
-            }`}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="w-5 h-5 animate-spin" />
-                Signing In...
-              </>
-            ) : (
-              'Sign In'
-            )}
-          </button>
-        </form>
-
-        {/* Divider */}
-        <div className="flex items-center justify-center mt-6">
-          <div className="border-t border-gray-300 dark:border-neutral-700 w-full" />
-          <span className="px-3 text-gray-500 dark:text-gray-400 text-sm">
-            or
-          </span>
-          <div className="border-t border-gray-300 dark:border-neutral-700 w-full" />
-        </div>
-
-        {/* GitHub Sign-in */}
-        <button
-          onClick={handleGithubSignIn}
-          disabled={loading}
-          className="cursor-pointer w-full py-3 mt-5 flex items-center justify-center gap-2 border border-gray-300 dark:border-neutral-700 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition-all duration-200 disabled:opacity-60"
+        {/* Decorative badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 flex justify-center"
         >
-          <Github className="w-5 h-5 text-gray-700 dark:text-gray-200" />
-          <span className="text-gray-800 dark:text-gray-100 font-medium">
-            Sign in with GitHub
-          </span>
-        </button>
-
-        {/* Footer */}
-        <p className="text-center text-gray-600 dark:text-gray-400 text-sm mt-6">
-          Don’t have an account?{' '}
-          <span
-            onClick={() => router.push('/auth/signup')}
-            className="text-gray-900 dark:text-gray-100 font-medium cursor-pointer hover:underline"
-          >
-            Sign up
-          </span>
-        </p>
+          <div className="glass px-4 py-2 rounded-full flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-yellow-500" />
+            <span className="text-sm text-gray-600 dark:text-gray-300">
+              Join 2,000+ students already connected
+            </span>
+          </div>
+        </motion.div>
       </motion.div>
     </div>
   );

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import connectDB from '@/lib/mongodb';
 import SavedJob from '@/models/saved-job';
+import JobPost from '@/models/post'; // Required for populate
+import User from '@/models/user'; // Required for populate
 
 export async function GET(req: NextRequest) {
   try {
@@ -67,15 +69,30 @@ export async function DELETE(req: NextRequest) {
 
     await connectDB();
 
-    const { jobPostId } = await req.json();
+    const { searchParams } = new URL(req.url);
+    const id = searchParams.get('id');
 
-    await SavedJob.findOneAndDelete({
-      userId: session.user.id,
-      jobPostId,
-    });
+    if (id) {
+      // Delete by SavedJob record ID
+      await SavedJob.findOneAndDelete({
+        _id: id,
+        userId: session.user.id,
+      });
+    } else {
+      // Delete by jobPostId from body
+      const { jobPostId } = await req.json().catch(() => ({}));
+      if (!jobPostId) {
+        return NextResponse.json({ error: 'ID or jobPostId required' }, { status: 400 });
+      }
+      await SavedJob.findOneAndDelete({
+        userId: session.user.id,
+        jobPostId,
+      });
+    }
 
     return NextResponse.json({ message: 'Job removed from saved' });
   } catch (error) {
+    console.error('Delete saved job error:', error);
     return NextResponse.json(
       { error: 'Failed to remove saved job' },
       { status: 500 }

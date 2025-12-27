@@ -14,6 +14,12 @@ export interface IUser {
   university?: string;
   major?: string;
   graduationYear?: number;
+  // New fields
+  linkedin?: string;
+  github?: string;
+  portfolio?: string;
+  profileScore?: number;
+  notificationsEnabled?: boolean;
   createdAt: Date;
   updatedAt: Date;
   resetToken?: string;
@@ -65,6 +71,29 @@ const UserSchema = new Schema<IUser>(
     university: String,
     major: String,
     graduationYear: Number,
+    // New fields
+    linkedin: {
+      type: String,
+      trim: true,
+    },
+    github: {
+      type: String,
+      trim: true,
+    },
+    portfolio: {
+      type: String,
+      trim: true,
+    },
+    profileScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 100,
+    },
+    notificationsEnabled: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
@@ -72,6 +101,24 @@ const UserSchema = new Schema<IUser>(
 // Indexes for performance
 UserSchema.index({ email: 1 });
 UserSchema.index({ skills: 1 });
+
+// Calculate profile score before saving
+UserSchema.pre('save', function (next) {
+  let score = 0;
+  if (this.name) score += 10;
+  if (this.email) score += 10;
+  if (this.bio && this.bio.length > 20) score += 15;
+  if (this.skills && this.skills.length > 0) score += 15;
+  if (this.interests && this.interests.length > 0) score += 10;
+  if (this.resume) score += 15;
+  if (this.university) score += 5;
+  if (this.major) score += 5;
+  if (this.linkedin) score += 5;
+  if (this.github) score += 5;
+  if (this.portfolio) score += 5;
+  this.profileScore = Math.min(score, 100);
+  next();
+});
 
 const User: Model<IUser> =
   models.User || mongoose.model<IUser>('User', UserSchema);
