@@ -58,7 +58,6 @@ interface Job {
 export default function JobPage() {
   const { id } = useParams();
   const router = useRouter();
-  const { openChatWith } = useStore();
 
   const [showChatWindow, setShowChatWindow] = useState(false);
   const [job, setJob] = useState<Job | null>(null);
@@ -493,10 +492,7 @@ export default function JobPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => {
-                      openChatWith(job.creatorId._id);
-                      setShowChatWindow(true);
-                    }}
+                    onClick={() => setShowChatWindow(true)}
                     className="btn-secondary inline-flex items-center gap-2"
                   >
                     <MessageSquare className="w-4 h-4" />

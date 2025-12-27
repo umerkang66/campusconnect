@@ -277,8 +277,8 @@ export default function MessagesPage() {
                                     animate={{ opacity: 1 }}
                                     onClick={() => setActiveConversation(conv)}
                                     className={`flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-100 dark:hover:bg-neutral-800 transition-colors border-b border-gray-100 dark:border-neutral-800 ${activeConversation?._id === conv._id
-                                            ? 'bg-indigo-50 dark:bg-indigo-900/20'
-                                            : ''
+                                        ? 'bg-indigo-50 dark:bg-indigo-900/20'
+                                        : ''
                                         }`}
                                 >
                                     {/* Avatar */}
@@ -313,8 +313,8 @@ export default function MessagesPage() {
                                         </div>
                                         <p
                                             className={`text-sm truncate ${conv.unreadCount > 0
-                                                    ? 'text-gray-900 dark:text-white font-medium'
-                                                    : 'text-gray-500'
+                                                ? 'text-gray-900 dark:text-white font-medium'
+                                                : 'text-gray-500'
                                                 }`}
                                         >
                                             {conv.lastMessage.senderId === session?.user?.id && (
@@ -380,8 +380,8 @@ export default function MessagesPage() {
                                             >
                                                 <div
                                                     className={`max-w-[75%] px-4 py-2 rounded-2xl ${isMe
-                                                            ? 'bg-indigo-500 text-white rounded-br-md'
-                                                            : 'bg-white dark:bg-neutral-800 text-gray-900 dark:text-white rounded-bl-md shadow-sm'
+                                                        ? 'bg-indigo-500 text-white rounded-br-md'
+                                                        : 'bg-white dark:bg-neutral-800 text-gray-900 dark:text-white rounded-bl-md shadow-sm'
                                                         }`}
                                                 >
                                                     <p className="break-words">{msg.content}</p>
