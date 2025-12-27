@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import { writeFile, mkdir } from 'fs/promises';
-import path from 'path';
+import cloudinary from '@/lib/cloudinary';
 
 export async function POST(req: NextRequest) {
     try {
@@ -35,29 +34,32 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Create uploads directory if not exists
-        const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'resumes');
-        try {
-            await mkdir(uploadsDir, { recursive: true });
-        } catch (e) {
-            // Directory may already exist
-        }
-
-        // Generate unique filename
-        const timestamp = Date.now();
-        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const filename = `${session.user.id}_${timestamp}_${safeName}`;
-        const filepath = path.join(uploadsDir, filename);
-
-        // Convert file to buffer and save
+        // Convert file to buffer
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
-        await writeFile(filepath, buffer);
 
-        // Return the public URL
-        const url = `/uploads/resumes/${filename}`;
+        // Upload to Cloudinary
+        const result = await new Promise<any>((resolve, reject) => {
+            cloudinary.uploader.upload_stream(
+                {
+                    resource_type: 'raw',
+                    folder: 'campusconnect/resumes',
+                    use_filename: true,
+                    unique_filename: true,
+                    format: 'pdf',
+                },
+                (error, result) => {
+                    if (error) reject(error);
+                    else resolve(result);
+                }
+            ).end(buffer);
+        });
 
-        return NextResponse.json({ url, filename });
+        return NextResponse.json({
+            url: result.secure_url,
+            filename: file.name,
+            publicId: result.public_id
+        });
     } catch (error) {
         console.error('Upload error:', error);
         return NextResponse.json(

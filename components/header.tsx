@@ -7,6 +7,7 @@ import { useStore } from '@/store/use-store';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GraduationCap, X, MessageSquare, Target, TrendingUp, Menu } from 'lucide-react';
 import ChatWindow from './chat-window';
+import { ThemeToggle } from './theme-toggle';
 
 export default function Header() {
   const { data: session } = useSession();
@@ -114,6 +115,8 @@ export default function Header() {
               >
                 Sign out
               </button>
+
+              <ThemeToggle />
             </>
           ) : (
             <>
@@ -123,6 +126,7 @@ export default function Header() {
               <Link href="/auth/signup" className="btn-secondary text-sm py-1.5 px-4">
                 Sign up
               </Link>
+              <ThemeToggle />
             </>
           )}
         </nav>
