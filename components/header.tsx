@@ -60,11 +60,11 @@ export default function Header() {
 
           {session?.user ? (
             <>
-              {/* Chat button */}
-              <button
-                onClick={handleOpenChat}
+              {/* Messages Link */}
+              <Link
+                href="/messages"
                 className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
-                aria-label="Open chat"
+                aria-label="Messages"
               >
                 <MessageSquare className="h-5 w-5 text-gray-700 dark:text-gray-300" />
                 {unreadCount > 0 && (
@@ -72,7 +72,7 @@ export default function Header() {
                     {unreadCount}
                   </span>
                 )}
-              </button>
+              </Link>
 
               {/* Role Toggle */}
               <button
@@ -134,10 +134,10 @@ export default function Header() {
         {/* Mobile Menu Button */}
         <div className="flex items-center gap-2 md:hidden">
           {session?.user && (
-            <button
-              onClick={handleOpenChat}
+            <Link
+              href="/messages"
               className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-neutral-800 transition"
-              aria-label="Open chat"
+              aria-label="Messages"
             >
               <MessageSquare className="h-5 w-5 text-gray-700 dark:text-gray-300" />
               {unreadCount > 0 && (
@@ -145,7 +145,7 @@ export default function Header() {
                   {unreadCount}
                 </span>
               )}
-            </button>
+            </Link>
           )}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
