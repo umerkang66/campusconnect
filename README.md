@@ -1,38 +1,15 @@
-# Teams Connect
+# CampusConnect
 
-Install the Deps
+A modern job board and networking platform for students and employers. Built with Next.js 16, TypeScript, and MongoDB.
 
-```
-npm install
-```
+## Features
 
-Add these environment variables
+- 🔐 **Authentication** – GitHub OAuth & email sign-in via NextAuth
+- 💼 **Job Board** – Post, discover, and apply for jobs
+- 💬 **Real-time Messaging** – Chat powered by Pusher
+- 🤖 **AI Enhancement** – Improve job descriptions with Gemini AI
+- 📊 **Dashboard** – Track applications and manage postings
 
-```
-NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=vh1ZBRq0FqNzYFxNeKNlw2V7F0nozwo1JDtXFlSumgM
-NEXT_PUBLIC_API_BASE=http://localhost:3000
+## Tech Stack
 
-# Pusher Configuration
-NEXT_PUBLIC_PUSHER_KEY=your_pusher_key
-NEXT_PUBLIC_PUSHER_CLUSTER=your_cluster
-PUSHER_APP_ID=your_app_id
-PUSHER_SECRET=your_secret0
-GITHUB_CLIENT_ID=
-GITHUB_CLIENT_SECRET=
-MONGODB_URI=
-EMAIL_USER=sendinblue_username
-EMAIL_PASS=sendinblue_password
-```
-
-Build the app
-
-```
-npm run build
-```
-
-Start the app
-
-```
-npm start
-```
+Next.js • TypeScript • MongoDB • Tailwind CSS • Pusher • NextAuth • Framer Motion
